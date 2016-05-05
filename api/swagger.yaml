@@ -1,0 +1,124 @@
+---
+swagger: "2.0"
+info:
+  description: "Check applications for known vulnerabilities"
+  version: "1.0.0"
+  title: "Security Oracle API"
+host: "security-oracle.eu-gb.mybluemix.net"
+schemes:
+- "https"
+produces:
+- "application/json"
+paths:
+  /app:
+    post:
+      tags:
+      - "App"
+      summary: "Post app for security review"
+      description: "The app endpoint allows for submission of apps for security review\
+        \ by the oracle."
+      operationId: "appPOST"
+      parameters:
+      - in: "body"
+        name: "application"
+        description: "Application description"
+        required: false
+        schema:
+          $ref: "#/definitions/application"
+      responses:
+        200:
+          description: "Application scan result"
+          schema:
+            $ref: "#/definitions/inline_response_200"
+        default:
+          description: "Unexpected error"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "App"
+  /report/{reportId}:
+    get:
+      tags:
+      - "Report"
+      summary: "View detailed security report"
+      description: "This endpoint displays the detailed security report for a sumbitted\
+        \ app, given the generated report id"
+      operationId: "reportReportIdGET"
+      parameters:
+      - name: "reportId"
+        in: "path"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Application scan result"
+          schema:
+            $ref: "#/definitions/inline_response_200"
+        default:
+          description: "Unexpected error"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "Report"
+definitions:
+  Platform:
+    type: "string"
+    enum:
+    - "NodeJS"
+  AppId:
+    type: "string"
+  Dependency:
+    type: "object"
+    required:
+    - "from"
+    - "name"
+    - "version"
+    properties:
+      name:
+        type: "string"
+      version:
+        type: "string"
+      from:
+        type: "string"
+      dependencies:
+        $ref: "#/definitions/Dependencies"
+  Dependencies:
+    type: "array"
+    items:
+      $ref: "#/definitions/Dependency"
+  Error:
+    type: "object"
+    properties:
+      code:
+        type: "integer"
+        format: "int32"
+      message:
+        type: "string"
+      fields:
+        type: "string"
+  application:
+    type: "object"
+    required:
+    - "appId"
+    - "name"
+    - "platform"
+    - "version"
+    properties:
+      name:
+        type: "string"
+      version:
+        type: "string"
+      uris:
+        type: "array"
+        items:
+          type: "string"
+      appId:
+        $ref: "#/definitions/AppId"
+      platform:
+        $ref: "#/definitions/Platform"
+      dependencies:
+        $ref: "#/definitions/Dependencies"
+  inline_response_200:
+    properties:
+      vulnerable:
+        type: "boolean"
+      report_id:
+        type: "string"

@@ -4,7 +4,9 @@ var Promise = require("bluebird");
 
 var check = Promise.promisify(require('nsp/lib/check'));
 var processDeps = require('../utils/processDeps');
-var tmp = Promise.promisifyAll(require('tmp'));
+var uuid = require('uuid');
+
+var db = require('../utils/db');
 
 exports.appPOST = function(args, res, next) {
   /**
@@ -12,14 +14,17 @@ exports.appPOST = function(args, res, next) {
   * application (Application)
   **/
   
+  res.setHeader('Content-Type', 'application/json');
   
   var examples = {};
   examples['application/json'] = {
   "vulnerable" : true,
-  "report_id" : "aeiou"
+  "reportId" : "aeiou"
 };
 
-  var app = args.application;
+  var reportId = uuid.v4();
+
+  var app = args.application.value;
   
   if (app.dependencies) {
       app.dependencies = processDeps(app.dependencies);
@@ -29,21 +34,29 @@ exports.appPOST = function(args, res, next) {
       shrinkwrap: app,
       offline: true,
       advisoriesPath: './advisories.json'
-  }).then(function(result) {
-      res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify(result));
+  }).then(function(vulnerabilites) {
+      var result = {
+          vulnerable: vulnerabilites.length > 0,
+          reportId: reportId
+      }
+      
+      res.write(JSON.stringify(result));
+      
+      var doc = {
+          appId: app.appId,
+          name: app.name,
+          version: app.version,
+          uris: app.uris,
+          vulnerabilites: vulnerabilites
+      };
+      
+      return db.putAsync(reportId, doc);
+  }).then(function(doc) {
+      res.end();
   }, function(error) {
       //console.error(error.message);
       //console.error(error.stack);
       res.end(error.stack);
   });
-  
-  // if(Object.keys(examples).length > 0) {
-//     res.setHeader('Content-Type', 'application/json');
-//     res.end(JSON.stringify(examples[Object.keys(examples)[0]] || {}, null, 2));
-//   }
-//   else {
-//     res.end();
-//   }
 }
 

@@ -3,17 +3,19 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "curl -sS https://api.nodesecurity.io/advisories -o advisories.json && node app.js"
+    "start": "node app.js",
+    "dl-start": "curl -sS https://api.nodesecurity.io/advisories -o advisories.json && node app.js"
   },
   "dependencies": {
     "bluebird": "^3.3.5",
     "cfenv": "1.0.x",
     "express": "4.13.x",
     "js-yaml": "^3.3.0",
+    "level": "^1.4.0",
     "lodash": "^4.11.1",
-    "nsp": "^2.3.2",
+    "nsp": "^2.3.3",
     "swagger-tools": "0.9.*",
-    "tmp": "0.0.28"
+    "uuid": "^2.0.2"
   },
   "repository": {},
   "engines": {

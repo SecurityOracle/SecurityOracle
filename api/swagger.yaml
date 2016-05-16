@@ -120,5 +120,5 @@ definitions:
     properties:
       vulnerable:
         type: "boolean"
-      report_id:
+      reportId:
         type: "string"

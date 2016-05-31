@@ -13,7 +13,8 @@
     "js-yaml": "^3.3.0",
     "level": "^1.4.0",
     "lodash": "^4.11.1",
-    "nsp": "^2.3.3",
+    "npm-remote-ls": "^1.3.0",
+    "nsp": "mmgm/nsp",
     "swagger-tools": "0.9.*",
     "uuid": "^2.0.2"
   },

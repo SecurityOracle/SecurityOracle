@@ -4,6 +4,7 @@ var Promise = require("bluebird");
 
 var check = Promise.promisify(require('nsp/lib/check'));
 var processDeps = require('../utils/processDeps');
+var findSolutions = require('../utils/findSolutions');
 var uuid = require('uuid');
 
 var db = require('../utils/db');
@@ -34,7 +35,7 @@ exports.appPOST = function(args, res, next) {
       shrinkwrap: app,
       offline: true,
       advisoriesPath: './advisories.json'
-  }).then(function(vulnerabilites) {
+  }).then(findSolutions).then(function(vulnerabilites) {
       var result = {
           vulnerable: vulnerabilites.length > 0,
           reportId: reportId

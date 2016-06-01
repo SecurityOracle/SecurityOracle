@@ -11,17 +11,10 @@ function lsAsync(name, version, flatten) {
 }
 
 function ls2shrinkwrap(tree) {
-    var rootKey = Object.keys(tree)[0];
-    var root = tree[rootKey];
-    
-    var parts = rootKey.split('@');
-    var name = parts[0];
-    var version = parts[1];
-    
     return {
-        name: name,
-        version: version,
-        dependencies: ls2shrinkwrapDeps(root)
+        name: 'temp-root',
+        version: '1.0.0',
+        dependencies: ls2shrinkwrapDeps(tree)
     };
 }
 
@@ -47,14 +40,17 @@ function findSolutions(vulns) {
             var name = parts[0];
             var version = parts[1];
             
-            return lsAsync(name, '^'+version).then(ls2shrinkwrap).then(function(deps) {
+            return lsAsync(name, '^'+version).then(ls2shrinkwrap).then(function(shrinkwrap) {
                 return check({
-                    shrinkwrap: deps,
+                    shrinkwrap: shrinkwrap,
                     offline: true,
                     advisoriesPath: './advisories.json'
                 }).then(function(vulns) {
                     if (vulns.length == 0) {
-                        return deps.name + "@" + deps.version;
+                        var deps = shrinkwrap.dependencies;
+                        var directDep = deps[Object.keys(deps)[0]];
+                        
+                        return directDep.name + "@" + directDep.version;
                     } else {
                         return null;
                     }

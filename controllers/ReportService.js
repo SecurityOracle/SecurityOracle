@@ -11,10 +11,9 @@ exports.reportReportIdGET = function(args, res, next) {
   res.setHeader('Content-Type', 'application/json');
   
   var reportId = args.reportId.value;
+  var reportKey = "report_" + reportId;
   
-  // res.write(JSON.stringify(args.reportId.value));
-  // res.end();
-  db.getAsync(reportId).then(function(doc) {
+  db.getAsync(reportKey).then(function(doc) {
       res.end(JSON.stringify(doc, null, 2));
   }, function(error) {
       res.end(JSON.stringify(error.stack));

@@ -35,6 +35,83 @@ paths:
           schema:
             $ref: "#/definitions/Error"
       x-swagger-router-controller: "App"
+  /app/{appId}:
+    get:
+      tags:
+      - "App"
+      summary: "Get list of reports for an app"
+      description: "Returns a list of report IDs for a particular app"
+      operationId: "appAppIdGET"
+      parameters:
+      - name: "appId"
+        in: "path"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Relevant reports, sorted most-recent first"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ReportId"
+        default:
+          description: "Unexpected error"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "App"
+  /app/{appId}/solutions:
+    get:
+      tags:
+      - "Solutions"
+      summary: "Retrieve accepted solutions"
+      description: "Retrieve accepted solutions"
+      operationId: "appAppIdSolutionsGET"
+      parameters:
+      - name: "appId"
+        in: "path"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Array of accepted solutions - each being a package with version,\
+            \ as originally proposed in the report"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/VersionedPackage"
+        default:
+          description: "Unexpected error"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "Solutions"
+    post:
+      tags:
+      - "Solutions"
+      summary: "Accept (or reject) solutions"
+      description: "Accept solutions proposed in the report"
+      operationId: "appAppIdSolutionsPOST"
+      parameters:
+      - name: "appId"
+        in: "path"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "resolution"
+        description: "Array of accepted solutions - each being a package with version,\
+          \ as originally proposed in the report"
+        required: false
+        schema:
+          type: "array"
+          items:
+            $ref: "#/definitions/VersionedPackage"
+      responses:
+        200:
+          description: "OK"
+        default:
+          description: "Unexpected error"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "Solutions"
   /report/{reportId}:
     get:
       tags:
@@ -52,7 +129,7 @@ paths:
         200:
           description: "Application scan result"
           schema:
-            $ref: "#/definitions/inline_response_200"
+            $ref: "#/definitions/inline_response_200_1"
         default:
           description: "Unexpected error"
           schema:
@@ -64,6 +141,8 @@ definitions:
     enum:
     - "NodeJS"
   AppId:
+    type: "string"
+  ReportId:
     type: "string"
   Dependency:
     type: "object"
@@ -84,6 +163,39 @@ definitions:
     type: "array"
     items:
       $ref: "#/definitions/Dependency"
+  Vulnerability:
+    type: "object"
+    properties:
+      module:
+        type: "string"
+      version:
+        type: "string"
+      vulnerable_versions:
+        type: "string"
+      patched_versions:
+        type: "string"
+      title:
+        type: "string"
+      path:
+        type: "array"
+        items:
+          $ref: "#/definitions/Path"
+      advisory:
+        type: "string"
+      line:
+        $ref: "#/definitions/Vulnerability_line"
+      content:
+        type: "string"
+      solutions:
+        type: "array"
+        items:
+          $ref: "#/definitions/VersionedPackage"
+  Path:
+    type: "array"
+    items:
+      $ref: "#/definitions/VersionedPackage"
+  VersionedPackage:
+    type: "string"
   Error:
     type: "object"
     properties:
@@ -122,3 +234,25 @@ definitions:
         type: "boolean"
       reportId:
         type: "string"
+  inline_response_200_1:
+    properties:
+      name:
+        type: "string"
+      version:
+        type: "string"
+      uris:
+        type: "array"
+        items:
+          type: "string"
+      appId:
+        $ref: "#/definitions/AppId"
+      vulnerabilities:
+        type: "array"
+        items:
+          $ref: "#/definitions/Vulnerability"
+  Vulnerability_line:
+    properties:
+      start:
+        type: "integer"
+      end:
+        type: "integer"

@@ -1,6 +1,6 @@
 {
   "name": "SecurityOracle",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "start": "node app.js",
@@ -9,6 +9,7 @@
   "dependencies": {
     "bluebird": "^3.3.5",
     "cfenv": "1.0.x",
+    "cors": "^2.7.1",
     "express": "4.13.x",
     "js-yaml": "^3.3.0",
     "level": "^1.4.0",

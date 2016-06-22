@@ -6,10 +6,14 @@ var http = require('http');
 var swaggerTools = require('swagger-tools');
 var jsyaml = require('js-yaml');
 var fs = require('fs');
+var cors = require('cors');
 
 // get the app environment from Cloud Foundry
 var appEnv = cfenv.getAppEnv();
 var serverPort = appEnv.port;
+
+// enable cors on all requests
+app.use(cors());
 
 // swaggerRouter configuration
 var options = {

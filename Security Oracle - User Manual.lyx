@@ -1,0 +1,690 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder false
+\pdf_colorlinks false
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Security Oracle - User Manual
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Part
+Security Oracle Service
+\end_layout
+
+\begin_layout Section
+Overview
+\end_layout
+
+\begin_layout Standard
+Security Oracle is the main component of the Security Oracle ecosystem.
+ It is a RESTful, Swagger-compatible API for determining if an application
+ has any known vulnerabilities, and if so, it may propose solutions to these
+ vulnerabilities and assist the user in evaluating and applying them.
+ Version 1 of Security Oracle may only do so for NodeJS applications, and
+ may only identify vulnerabilities if they had been reported on nodesecurity.io.
+ 
+\end_layout
+
+\begin_layout Section
+Usage
+\end_layout
+
+\begin_layout Standard
+As of this writing, an instance of Security Oracle is deployed and publicly
+ accessible at 
+\begin_inset Flex URL
+status open
+
+\begin_layout Plain Layout
+
+https://security-oracle.eu-gb.mybluemix.net
+\end_layout
+
+\end_inset
+
+.
+ As Security Oracle is fully Swagger-compatible, it also includes an embedded
+ documentation browser that also supports dispatching fully-formed requests
+ to the server.
+ You may view this system at 
+\begin_inset Flex URL
+status open
+
+\begin_layout Plain Layout
+
+https://security-oracle.eu-gb.mybluemix.net/docs/
+\end_layout
+
+\end_inset
+
+.
+ While this section of the document will briefly outline the supported operation
+s, the exact expected input and output formats and location of the endpoints
+ is better detailed on the documentation browser.
+\end_layout
+
+\begin_layout Subsection
+The App Endpoint
+\end_layout
+
+\begin_layout Standard
+The App endpoint is likely where an application will first interact with
+ Security Oracle.
+ It supports two operations - an HTTP POST to submit an app for review,
+ ultimately reporting whether any vulnerabilities were detected and linking
+ to a full report, and an HTTP GET to retrieve a list of all reports associated
+ with an app.
+ Besides some standard metadata describing the submitted application, the
+ App endpoint more importantly expects a serialized version of the application's
+ dependency tree.
+ The exact structure of this serialized form is given more clearly in the
+ Swagger docs.
+ It is also explored and compared with the native formats exposed by common
+ package management systems, in the peripheral report Extracting Dependency
+ Tree from Common Package Managers.
+\end_layout
+
+\begin_layout Subsection
+The Report Endpoint
+\end_layout
+
+\begin_layout Standard
+The Report endpoint is likely the second interaction an application will
+ have with Security Oracle.
+ Using a report ID returned by the the App endpoint, the user may then retrieve
+ a more detailed report of the vulnerabilities found.
+ This report will include the vulnerable package and its version, its path
+ down the dependency tree, a description of the vulnerability, a hyperlink
+ to the vulnerability's page on the vulnerability database and, if found,
+ a proposed solution.
+ A proposed solution will always be the name of a direct dependency of the
+ submitted application and a version of that dependency that is no longer
+ vulnerable.
+ Security Oracle will never suggest updating dependencies further down the
+ tree, as updates of this nature may cause unexpected changes in behavior,
+ nor will it suggest a version that isn't compatible with the currently
+ installed version or a version where the vulnerability isn't fixed.
+\end_layout
+
+\begin_layout Subsection
+The Solution Endpoint
+\end_layout
+
+\begin_layout Standard
+The Solution endpoint records the user's decision regarding proposed solutions.
+ While the two previous endpoints were technically sufficient to detect
+ vulnerabilities and remediate them if possible, in real-world use, the
+ user may choose to reject a proposed solution.
+ The goal is to allow the user to perform this entire process using Security
+ Oracle, therefore this endpoint exists to store the user's choice regarding
+ proposed solutions and to allow retrieval of this information at a later
+ time.
+ Specifically, the information stored is a list of accepted solutions.
+ Any solutions not listed are implicitly rejected and will not be applied.
+\end_layout
+
+\begin_layout Section
+Installation and Setup
+\end_layout
+
+\begin_layout Standard
+You may also install and run your own instance of Security Oracle.
+ Security Oracle is written in NodeJS and utilizes NPM packages, so you
+ must have NodeJS and NPM installed.
+ It has been most extensively tested using NodeJS version 4, but should
+ have no issues running under versions 5 or 6.
+ It has not been tested under NodeJS 0.12.
+ While Security Oracle is a fully self-contained NodeJS application and
+ NPM package, it is not currently published publicly on NPM.
+ To install it locally, you must check the source code out of its GitHub-hosted
+ git repository.
+ A typical installation procedure may be:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+$ git clone https://github.com/SecurityOracle/SecurityOracle.git
+\end_layout
+
+\begin_layout Plain Layout
+
+$ cd SecurityOracle
+\end_layout
+
+\begin_layout Plain Layout
+
+$ npm install
+\end_layout
+
+\end_inset
+
+Security Oracle requires it's own local version of the vulnerability database
+ maintained by nodesecurity.io.
+ For your convenience, you may download this database and immediately start
+ the service by running:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+$ npm run dl-start
+\end_layout
+
+\end_inset
+
+You may then start Security Oracle again without downloading the vulnerability
+ database by running:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+$ npm run start
+\end_layout
+
+\end_inset
+
+Security Oracle is also compatible and will behave well in a Cloud Foundry
+ environment.
+ Assuming that you have all the relevant tools installed and configured,
+ you may run:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+$ cf push
+\end_layout
+
+\end_inset
+
+to deploy Security Oracle to a Cloud Foundry environment.
+ This may require a manifest.yml file or additional configuration.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Part
+Security Oracle NodeJS Buildpack
+\end_layout
+
+\begin_layout Section
+Overview
+\end_layout
+
+\begin_layout Standard
+While the Security Oracle Service provides the needed information to identify
+ and remediate security vulnerabilities, it does not immediately provide
+ a way to use this information to easily improve the security of deployed
+ applications.
+ The Security Oracle NodeJS Buildpack is a drop-in replacement for the standard
+ Cloud Foundry NodeJS buildpack, that integrates Security Oracle into the
+ standard deployment workflow for Cloud Foundry NodeJS applications.
+\end_layout
+
+\begin_layout Section
+Usage
+\end_layout
+
+\begin_layout Standard
+The Security Oracle NodeJS Buildpack is a standard Cloud Foundry-compatible
+ buildpack for NodeJS.
+ In fact, it was directly forked from the official NodeJS buildpack.
+ As such, using it for your project is as simple as using any other buildpack.
+ Assuming Cloud Foundry tools are installed and configured correctly on
+ your machine, simply deploy your application by running
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+$ cf push -b https://github.com/SecurityOracle/nodejs-buildpack
+\end_layout
+
+\end_inset
+
+to push your application using the Security Oracle NodeJS Buildpack.
+\end_layout
+
+\begin_layout Subsection
+Buildpack Output
+\end_layout
+
+\begin_layout Standard
+In addition to the output that is to be expected from the standard NodeJS
+ buildpack, Security Oracle NodeJS Buildpack will print two additional sections;
+ Applying previous solutions and Querying Security Oracle.
+ The former will not contain any additional information - lacking any errors,
+ you may assume that any proposed solutions that have been explicitly accepted
+ have been successfully applied.
+ The latter will also contain two additional outputs; the vulnerability
+ status and a link to the full report.
+\end_layout
+
+\begin_layout Subsection
+Method of Operation
+\end_layout
+
+\begin_layout Standard
+Security Oracle NodeJS Buildpack is a copy of the standard Cloud Foundry
+ NodeJS buildpack, with the addition of two new steps.
+ First, before NPM dependencies are installed, the Buildpack queries the
+ Security Oracle Service for any relevant, accepted solutions for the current
+ application.
+ If found, the Buildpack alters the application's package.json, recording
+ the dependency version suggested by the Security Oracle Service.
+ Second, after the installation of all dependencies, the Buildpack compiles
+ the application metadata and dependency tree into the format expected by
+ Security Oracle Service, sends this information to it and reports the results.
+ 
+\end_layout
+
+\begin_layout Subsection
+Limitations
+\end_layout
+
+\begin_layout Standard
+As buildpacks run remotely, on the Cloud Foundry platform, any changes made
+ by the Buildpack to the application's package.json will not be persisted
+ to the user's local package.json file.
+ Additionally, the Buildpack is essentially useless without a Security Oracle
+ to query.
+ In it's current version, the Security Oracle NodeJS Buildpack is hard-coded
+ to refer to the Security Oracle hosted at security-oracle.eu-gb.mybluemix.net.
+ If this instance of Security Oracle were to become unavailable, the Buildpack
+ will have to be altered accordingly.
+ Please refer to the Developer's Manual for more information about the Buildpack
+'s implementation.
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Part
+Security Dashboard
+\end_layout
+
+\begin_layout Section
+Overview
+\end_layout
+
+\begin_layout Standard
+The combination of the Security Oracle Service and Buildpack provides all
+ the required information for identifying vulnerabilities, suggesting solutions
+ to them and applying them.
+ However, they fail to provide a mechanism to continuously monitor the vulnerabi
+lity status of an application, or even to accept or reject proposed solutions.
+ Buildpacks are by nature not interactive - they cannot accept user input,
+ they can only provide textual output and they may not run continuously
+ in the background unless an application is being pushed to Cloud Foundry.
+ Security Dashboard is a dashboard for Atlasboard, an open source framework
+ for developing and running dashboards.
+ It comes complete with the relevant jobs - background processes to continuously
+ supply up-to-date information, and widgets - methods to transform the acquired
+ information into meaningful visual representations for the user.
+ Security Dashboard can be configured to monitor any application submitted
+ to Security Oracle, identified by its unique application ID.
+\end_layout
+
+\begin_layout Section
+Usage
+\end_layout
+
+\begin_layout Standard
+Security Dashboard has two panels.
+ The left panel will list all deployed versions of the application, color
+ coded by their vulnerability status.
+ The right panel will always show the detailed vulnerability status of the
+ latest deployed version of the app.
+ If Security Oracle also has a proposed solution, you'll be presented with
+ a big button to accept it.
+ The button will turn green once accepted and you may then submit your accepted
+ solution back to the Security Oracle Service.
+ A typical workflow is shown in the figures below.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename Screen Shot 2016-07-03 at 8.20.24 PM.png
+	lyxscale 30
+	width 100line%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Security Dashboard showing two vulnerable deployed versions of the application
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename Screen Shot 2016-07-03 at 8.43.36 PM.png
+	lyxscale 30
+	width 100line%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Suggested solution accepted by clicking the 
+\begin_inset Quotes eld
+\end_inset
+
+Update
+\begin_inset Quotes erd
+\end_inset
+
+ button, and solutions submitted by clicking the 
+\begin_inset Quotes eld
+\end_inset
+
+Submit Solution
+\begin_inset Quotes erd
+\end_inset
+
+ button
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename Screen Shot 2016-07-03 at 8.46.58 PM.png
+	lyxscale 30
+	width 100line%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Security Dashboard showing the latest version free of any detected vulnerabiliti
+es
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Installation and Setup
+\end_layout
+
+\begin_layout Standard
+Security Dashboard is a comprised of a standard Atlasboard dashboard, as
+ well as a set of Atlasboard jobs and widgets.
+ Thus, it can be easily installed into any existing Atlasboard instance.
+ It is, however, distributed as a ready to run, standalone NodeJS application
+ that already includes a default Atlasboard installation.
+ Much like the Security Oracle Service, installing and running Security
+ Dashboard locally involves checking it out of GitHub using git and installing
+ NPM dependencies.
+ Atlasboard, and by extension Security Dashboard, are compatible with all
+ version of NodeJS starting at 0.10.
+ Assuming all local dependencies are installed, local installation would
+ typically be as follows:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+$ git clone https://github.com/SecurityOracle/SecurityDashboard.git
+\end_layout
+
+\begin_layout Plain Layout
+
+$ cd SecurityDashboard
+\end_layout
+
+\begin_layout Plain Layout
+
+$ npm install
+\end_layout
+
+\end_inset
+
+You must then configure your Security Dashboard to monitor your application
+ by entering its application ID in Security Dashboard's configuration files.
+ Navigate to packages/default/dashboard/security.json and find the 
+\begin_inset Quotes eld
+\end_inset
+
+appId
+\begin_inset Quotes erd
+\end_inset
+
+ parameter.
+ It's default value should be 
+\begin_inset Quotes eld
+\end_inset
+
+02f007e1-8719-4ec0-aca9-49eeec7aa69d
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Replace this value with your application ID.
+ The easiest way to get your application id is to run
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+$ cf env "[application name]"
+\end_layout
+
+\end_inset
+
+where [application name] is the name of an application as deployed to Cloud
+ Foundry, and look for the 
+\begin_inset Quotes eld
+\end_inset
+
+application_id
+\begin_inset Quotes erd
+\end_inset
+
+ parameter in the resulting output.
+\end_layout
+
+\begin_layout Standard
+Security Dashboard's local installation of Atlasboard was also altered slightly
+ to play nicely with Cloud Foundry.
+ It should be possible to deploy Security Dashboard to Cloud Foundry using
+ the standard 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+$ cf push
+\end_layout
+
+\end_inset
+
+ command, assuming Cloud Foundry is installed and configured correctly and
+ that a standard manifest.yml file is present.
+\end_layout
+
+\end_body
+\end_document

@@ -1,0 +1,513 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Extracting Dependency Tree from Common Package Managers
+\end_layout
+
+\begin_layout Part*
+Scope
+\end_layout
+
+\begin_layout Standard
+In this report we will present our dependency tree representation format
+ as well as ways to extract it not only from the reference package manager
+ implementation - NPM - but from others which have yet to be implemented.
+ We will specify the required information as well as practical ways of extractin
+g it from various package managers beside NPM.
+ We will not, however, delve deeply into methods of reformatting, serializing
+ or encoding the required information once it has been extracted.
+\end_layout
+
+\begin_layout Part*
+Dependency Tree Data Structure
+\end_layout
+
+\begin_layout Standard
+We've chosen to model our extracted dependency tree after the structure
+ produced by NPM - the Node Package Manager.
+ Dependencies are a list of objects, each containing the package name, resolved
+ version, resolution constraints - or where the version selected was resolved
+ from and, optionally, any subdepedencies.
+ An example of such a tree, serialized to JSON is below:
+\end_layout
+
+\begin_layout LyX-Code
+{  
+\end_layout
+
+\begin_layout LyX-Code
+  "name":"NodejsStarterApp",
+\end_layout
+
+\begin_layout LyX-Code
+  "version":"0.0.1",
+\end_layout
+
+\begin_layout LyX-Code
+  "dependencies":[  
+\end_layout
+
+\begin_layout LyX-Code
+    {  
+\end_layout
+
+\begin_layout LyX-Code
+      "name":"cfenv",
+\end_layout
+
+\begin_layout LyX-Code
+      "version":"1.0.3",
+\end_layout
+
+\begin_layout LyX-Code
+      "from":"cfenv@>=1.0.0 <1.1.0",
+\end_layout
+
+\begin_layout LyX-Code
+      "dependencies":[  
+\end_layout
+
+\begin_layout LyX-Code
+        {  
+\end_layout
+
+\begin_layout LyX-Code
+          "name":"js-yaml",
+\end_layout
+
+\begin_layout LyX-Code
+          "version":"3.4.6",
+\end_layout
+
+\begin_layout LyX-Code
+          "from":"js-yaml@>=3.4.0 <3.5.0"
+\end_layout
+
+\begin_layout LyX-Code
+        }
+\end_layout
+
+\begin_layout LyX-Code
+      ]
+\end_layout
+
+\begin_layout LyX-Code
+    },
+\end_layout
+
+\begin_layout LyX-Code
+    {  
+\end_layout
+
+\begin_layout LyX-Code
+      "name":"marked",
+\end_layout
+
+\begin_layout LyX-Code
+      "version":"0.3.3",
+\end_layout
+
+\begin_layout LyX-Code
+      "from":"marked@0.3.3"
+\end_layout
+
+\begin_layout LyX-Code
+    }
+\end_layout
+
+\begin_layout LyX-Code
+  ],
+\end_layout
+
+\begin_layout LyX-Code
+  "platform":"NodeJS"
+\end_layout
+
+\begin_layout LyX-Code
+}
+\end_layout
+
+\begin_layout Standard
+While similar to the representation returned natively by NPM, the exact
+ format is not identical.
+ The original format is presented more in depth in the next part.
+\end_layout
+
+\begin_layout Part*
+NodeJS/NPM
+\end_layout
+
+\begin_layout Standard
+NPM may produce the following output when queried for a project's dependency
+ tree, serialized as JSON:
+\end_layout
+
+\begin_layout LyX-Code
+$ npm ls -json
+\end_layout
+
+\begin_layout LyX-Code
+{
+\end_layout
+
+\begin_layout LyX-Code
+  "name": "NodejsStarterApp",
+\end_layout
+
+\begin_layout LyX-Code
+  "version": "0.0.1",
+\end_layout
+
+\begin_layout LyX-Code
+  "dependencies": {
+\end_layout
+
+\begin_layout LyX-Code
+    "cfenv": {
+\end_layout
+
+\begin_layout LyX-Code
+      "version": "1.0.3",
+\end_layout
+
+\begin_layout LyX-Code
+      "from": "cfenv@>=1.0.0 <1.1.0",
+\end_layout
+
+\begin_layout LyX-Code
+      "resolved": "https://registry.npmjs.org/cfenv/-/cfenv-1.0.3.tgz",
+\end_layout
+
+\begin_layout LyX-Code
+      "dependencies": {
+\end_layout
+
+\begin_layout LyX-Code
+        "js-yaml": {
+\end_layout
+
+\begin_layout LyX-Code
+          "version": "3.4.6",
+\end_layout
+
+\begin_layout LyX-Code
+          "from": "js-yaml@>=3.4.0 <3.5.0",
+\end_layout
+
+\begin_layout LyX-Code
+          "resolved": "https://registry.npmjs.org/js-yaml/-/js-yaml-3.4.6.tgz"
+\end_layout
+
+\begin_layout LyX-Code
+        }
+\end_layout
+
+\begin_layout LyX-Code
+      }
+\end_layout
+
+\begin_layout LyX-Code
+    },
+\end_layout
+
+\begin_layout LyX-Code
+    "marked": {
+\end_layout
+
+\begin_layout LyX-Code
+      "version": "0.3.3",
+\end_layout
+
+\begin_layout LyX-Code
+      "from": "marked@0.3.3",
+\end_layout
+
+\begin_layout LyX-Code
+      "resolved": "https://registry.npmjs.org/marked/-/marked-0.3.3.tgz"
+\end_layout
+
+\begin_layout LyX-Code
+    }
+\end_layout
+
+\begin_layout LyX-Code
+  }
+\end_layout
+
+\begin_layout LyX-Code
+}
+\end_layout
+
+\begin_layout Standard
+Specifically, dependencies are a map from the dependency name to an object
+ that describes the resolved dependency - it's version, the constraints
+ that lead to that version being chosen, the resolved package URL according
+ to NPM and any sub-dependencies.
+\end_layout
+
+\begin_layout Standard
+While similar, our data structure omits some extraneous information and
+ reorganizes the dependency specification from a map to a list of objects
+ that include the name of the package but omit the resolved URL.
+ Conversion between the two formats should be trivial and was in fact implemente
+d in our reference buildpack in only about a dozen lines of code.
+\end_layout
+
+\begin_layout Section*
+Maven
+\end_layout
+
+\begin_layout Standard
+Maven is a powerful build tool for Java projects that includes some dependency
+ resolution and management capabilities.
+ While Maven includes a powerful mechanism of resolving dependency version
+ conflicts, unlike NPM it does not support specifying a dependency version
+ range - only a specific version.
+\end_layout
+
+\begin_layout Standard
+Once maven is installed, one can simply run the tree goal of the dependency
+ plugin (which is built into maven itself).
+ The resulting file will have content with the following format:
+\end_layout
+
+\begin_layout LyX-Code
+$ mvn dependency:tree -DoutputFile=dependencies.txt
+\end_layout
+
+\begin_layout LyX-Code
+$ cat dependencies.txt
+\end_layout
+
+\begin_layout LyX-Code
+omri:test:war:1.0-SNAPSHOT
+\end_layout
+
+\begin_layout LyX-Code
+
+\backslash
+- org.springframework.ws:spring-ws-core:jar:2.1.4.RELEASE:compile
+\end_layout
+
+\begin_layout LyX-Code
+   +- org.springframework.ws:spring-xml:jar:2.1.4.RELEASE:compile
+\end_layout
+
+\begin_layout LyX-Code
+   +- org.springframework:spring-context:jar:3.2.4.RELEASE:compile
+\end_layout
+
+\begin_layout LyX-Code
+   |  
+\backslash
+- org.springframework:spring-expression:jar:3.2.4.RELEASE:compile
+\end_layout
+
+\begin_layout LyX-Code
+   +- org.springframework:spring-aop:jar:3.2.4.RELEASE:compile
+\end_layout
+
+\begin_layout LyX-Code
+   |  
+\backslash
+- aopalliance:aopalliance:jar:1.0:compile
+\end_layout
+
+\begin_layout LyX-Code
+   +- org.springframework:spring-oxm:jar:3.2.4.RELEASE:compile
+\end_layout
+
+\begin_layout LyX-Code
+   +- org.springframework:spring-web:jar:3.2.4.RELEASE:compile
+\end_layout
+
+\begin_layout LyX-Code
+   +- org.springframework:spring-webmvc:jar:3.2.4.RELEASE:compile
+\end_layout
+
+\begin_layout LyX-Code
+   +- wsdl4j:wsdl4j:jar:1.6.1:compile
+\end_layout
+
+\begin_layout LyX-Code
+   +- javax.xml.stream:stax-api:jar:1.0-2:compile
+\end_layout
+
+\begin_layout LyX-Code
+   +- commons-logging:commons-logging:jar:1.1.1:compile
+\end_layout
+
+\begin_layout LyX-Code
+   +- org.springframework:spring-core:jar:3.2.4.RELEASE:compile
+\end_layout
+
+\begin_layout LyX-Code
+   
+\backslash
+- org.springframework:spring-beans:jar:3.2.4.RELEASE:compile
+\end_layout
+
+\begin_layout Standard
+While not an easily parseable JSON string, this file contains all the necessary
+ information to generate an object much like the one described above.
+ Each line describes a unique package name, its resolved version and, optionally
+, any dependencies it may also have.
+ Notably missing is information corresponding to the 
+\begin_inset Quotes eld
+\end_inset
+
+from
+\begin_inset Quotes erd
+\end_inset
+
+ string, describing the constraints that lead to this particular version
+ being chosen.
+ However, as we know, Maven does not support this capability in the first
+ place, the from string is simply the package name followed by the resolved
+ version.
+\end_layout
+
+\begin_layout Part*
+Python/PIP
+\end_layout
+
+\begin_layout Standard
+PIP is a popular package manager for Python.
+ Unfortunately, Python packages are always installed globally, unlike NPM
+ or Maven, that download and install packages locally, straight into the
+ project directory.
+ The de-facto solution to this is to use a Python utility called virtualenv
+ that helps emulate separate Python installations per project, with their
+ own version of pip and a private pip install space.
+\end_layout
+
+\begin_layout Standard
+As pip packages are all installed globally (or in a simulated global environment
+,) the common way to list project dependencies is simply to list all packages
+ installed using
+\end_layout
+
+\begin_layout LyX-Code
+pip freeze
+\end_layout
+
+\begin_layout Standard
+Unfortunately, this returns a flat list of all packages installed and their
+ currently installed version.
+ This does not include any information about the dependency tree that lead
+ to those packages being installed, nor the constraints that lead to a particula
+r version being selected.
+ However, there's a third-party Python utility that extracts the dependency
+ tree, including the version constraints that lead to a version being selected
+ for installation.
+ The utility is itself installable via pip and is called pipdeptree.
+ Running pipdeptree on a project that directly depends only on Flask, for
+ example, might produce the following output:
+\end_layout
+
+\begin_layout LyX-Code
+$ pipdeptree
+\end_layout
+
+\begin_layout LyX-Code
+Flask==0.11
+\end_layout
+
+\begin_layout LyX-Code
+  - itsdangerous [required: >=0.21, installed: 0.24]
+\end_layout
+
+\begin_layout LyX-Code
+  - click [required: >=2.0, installed: 6.6]
+\end_layout
+
+\begin_layout LyX-Code
+  - Werkzeug [required: >=0.7, installed: 0.11.10]
+\end_layout
+
+\begin_layout LyX-Code
+  - Jinja2 [required: >=2.4, installed: 2.8]
+\end_layout
+
+\begin_layout LyX-Code
+    - MarkupSafe [installed: 0.23]
+\end_layout
+
+\begin_layout Standard
+Pipdeptree also supports a more easily parseable JSON output that contains
+ the exact same information and more, but the output is somewhat verbose
+ so an example was withheld from this report for brevity.
+ It should be quite easy to transform the JSON output of pipdeptree into
+ the required format.
+\end_layout
+
+\end_body
+\end_document

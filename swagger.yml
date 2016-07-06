@@ -1,0 +1,243 @@
+swagger: '2.0'
+info:
+  title: Security Oracle API
+  description: Check applications for known vulnerabilities
+  version: "1.0.0"
+# the domain of the service
+host: security-oracle.eu-gb.mybluemix.net
+# array of all schemes that your API supports
+schemes:
+  - https
+produces:
+  - application/json
+paths:
+  /app:
+    post:
+      summary: Post app for security review
+      description: The app endpoint allows for submission of apps for security review by the oracle. 
+      parameters:
+        - name: application
+          in: body
+          description: Application description
+          schema:
+            type: object
+            required:
+              - name
+              - version
+              - platform
+              - appId
+            properties:
+              name:
+                type: string
+              version:
+                type: string
+              uris:
+                type: array
+                items:
+                  type: string
+              appId:
+                $ref: '#/definitions/AppId'
+              platform:
+                $ref: '#/definitions/Platform'
+              dependencies:
+                $ref: '#/definitions/Dependencies'
+      tags:
+        - App
+      responses:
+        200:
+          description: Application scan result
+          schema:
+            type: object
+            properties:
+              vulnerable:
+                type: boolean
+              reportId:
+                type: string
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /app/{appId}:
+    get:
+      summary: Get list of reports for an app
+      description: Returns a list of report IDs for a particular app
+      parameters:
+        - name: appId
+          in: path
+          required: true
+          type: string
+      tags:
+        - App
+      responses:
+        200:
+          description: Relevant reports, sorted most-recent first
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ReportId'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+            
+  /app/{appId}/solutions:
+    post:
+      summary: Accept (or reject) solutions 
+      description: Accept solutions proposed in the report
+      responses:
+        200:
+          description: OK
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      tags:
+        - Solutions
+      parameters:
+        - name: appId
+          in: path
+          required: true
+          type: string
+        - name: resolution
+          in: body
+          description: Array of accepted solutions - each being a package with version, as originally proposed in the report
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/VersionedPackage"
+    get:
+      summary: Retrieve accepted solutions
+      description: Retrieve accepted solutions
+      responses:
+        200:
+          description: Array of accepted solutions - each being a package with version, as originally proposed in the report
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/VersionedPackage"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      tags:
+        - Solutions
+      parameters:
+        - name: appId
+          in: path
+          required: true
+          type: string
+          
+            
+  /report/{reportId}:
+    get:
+      summary: View detailed security report
+      description: This endpoint displays the detailed security report for a sumbitted app, given the generated report id
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          type: string
+      tags:
+        - Report
+      responses:
+        200:
+          description: Application scan result
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              version:
+                type: string
+              uris:
+                type: array
+                items:
+                  type: string
+              appId:
+                $ref: '#/definitions/AppId'
+              vulnerabilities:
+                type: array
+                items:
+                  $ref: "#/definitions/Vulnerability"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    
+definitions:
+  Platform:
+    type: string
+    enum:
+      - NodeJS
+  AppId:
+    type: string
+  ReportId:
+    type: string
+  Dependency:
+    type: object
+    required:
+      - name
+      - version
+      - from
+    properties:
+      name: 
+        type: string
+      version: 
+        type: string
+      from: 
+        type: string
+      dependencies:
+        $ref: "#/definitions/Dependencies"
+  Dependencies:
+    type: array
+    items:
+      $ref: "#/definitions/Dependency"
+  Vulnerability:
+    type: object
+    properties:
+      module:
+        type: string
+      version:
+        type: string
+      vulnerable_versions:
+        type: string
+      patched_versions:
+        type: string
+      title:
+        type: string
+      path:
+        type: array
+        items:
+          $ref: "#/definitions/Path"
+      advisory:
+        type: string
+      line:
+        type: object
+        properties:
+          start:
+            type: integer
+          end:
+            type: integer
+      content:
+        type: string
+      solutions:
+        type: array
+        items:
+          $ref: "#/definitions/VersionedPackage"
+  Path:
+    type: array
+    items:
+      $ref: "#/definitions/VersionedPackage"
+  VersionedPackage:
+    type: string
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      fields:
+        type: string

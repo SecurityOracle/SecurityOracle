@@ -1,0 +1,650 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder false
+\pdf_colorlinks false
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Security Oracle - Developer Manual
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Part
+About this manual
+\end_layout
+
+\begin_layout Standard
+This manual discusses some of the implementation details of Security Oracle.
+ It is intended for developers who wish to extend the original implementation
+ and assumes that the reader is familiar with the intended use and installation
+ of the individual components covered.
+ More information on the subject can be found in the Security Oracle User
+ Manual.
+\end_layout
+
+\begin_layout Standard
+Security Oracle is built for use with Cloud Foundry applications and both
+ this guide and the former assumes that the reader is familiar with Cloud
+ Foundry.
+ This guide also assumes basic familiarity with the structure of Cloud Foundry
+ buildpacks.
+\end_layout
+
+\begin_layout Standard
+Security Oracle Service and Security Dashboard are both written in NodeJS.
+ This guide assumes that the reader is familiar with NodeJS application
+ development.
+\end_layout
+
+\begin_layout Standard
+Additional technologies may be pertinent on a project-by-project basis.
+ These prerequisites will be discussed in each project's background and
+ prerequisites section as needed.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Part
+Security Oracle Service
+\end_layout
+
+\begin_layout Section
+Background and Prerequisites
+\end_layout
+
+\begin_layout Standard
+The Security Oracle Service is a Swagger compatible API, and is based on
+ an automatically generated NodeJS server.
+ You should be familiar with Swagger and the Swagger generator, or at least
+ the structure of a generated NodeJS Swagger server before proceeding.
+ You may read more at 
+\begin_inset Flex URL
+status open
+
+\begin_layout Plain Layout
+
+http://swagger.io
+\end_layout
+
+\end_inset
+
+ or even generate your own Swagger server from a Swagger configuration file
+ at 
+\begin_inset Flex URL
+status open
+
+\begin_layout Plain Layout
+
+http://editor.swagger.io/#/
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Security Oracle also uses Promises extensively.
+ Promises are an abstraction over asynchronicity in JavaScript that offer
+ more legible and composable semantics than traditional callbacks.
+ If you're not familiar with Promises, it's recommended that you get familiar
+ with them before approaching the Security Oracle codebase.
+ More specifically, Security Oracle uses Bluebird - a fast, safe implementation
+ of the Promise specification, that also comes with a great selection of
+ utility and higher-order functions to help convert conventional callback-based
+ functions to functions that return Promises, and to compose Promises in
+ meaningful, powerful ways.
+ It is highly recommended that you consult the Bluebird documentation (
+\begin_inset Flex URL
+status open
+
+\begin_layout Plain Layout
+
+http://bluebirdjs.com/docs/getting-started.html
+\end_layout
+
+\end_inset
+
+) before proceeding or as you interact with the code.
+\end_layout
+
+\begin_layout Standard
+The core solution finding algorithm has a concept of compatible packages
+ that is based on the Semantic Versioning specification.
+ If you are not familiar with this specification it may be helpful to consult
+ 
+\begin_inset Flex URL
+status open
+
+\begin_layout Plain Layout
+
+http://semver.org
+\end_layout
+
+\end_inset
+
+ although it may suffice to know that NPM packages follow a convention that
+ makes it easy to know if two versions of a package are compatible with
+ each other, and that we use this convention to select what we call 
+\begin_inset Quotes eld
+\end_inset
+
+semver-compatible
+\begin_inset Quotes erd
+\end_inset
+
+ (or simply 
+\begin_inset Quotes eld
+\end_inset
+
+compatible
+\begin_inset Quotes erd
+\end_inset
+
+) versions of packages.
+\end_layout
+
+\begin_layout Section
+File Structure
+\end_layout
+
+\begin_layout Standard
+Security Oracle is based on a standard Swagger-generated NodeJS server.
+ Like most other servers of this nature, the core business logic resides
+ in Service files.
+ Specifically the AppService.js, ReportService.js and SolutionService.js files
+ under the controllers directory.
+ Additionally, these services may use utility functions under the utils
+ directory.
+ These include the database layer in db.js, the solution finding algorithm
+ in findSolutions.js and dependency tree transformation in processDeps.js.
+\end_layout
+
+\begin_layout Section
+The Core Algorithm
+\end_layout
+
+\begin_layout Standard
+Security Oracle Service not only identifies security vulnerabilities in
+ the user's application's dependency tree, but can suggest solutions to
+ these problems.
+ The main constraint is that a proposed solution should never break the
+ user's application and any breakage that does occur should be easy to fix.
+ Therefore, any new package version that is proposed as a solution must
+ be, as far as we can tell, compatible with the version it replaces.
+ Additionally, even as we minimize the risk of installing an incompatible
+ package version, we must try to maximize the user's ability to work around
+ incompatibilities if they arise.
+ In concrete terms, this would mean we can only alter direct dependencies
+ installed by the application developer, as these are packages that the
+ application developer interacts with directly.
+ The algorithm is as follows:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+1.
+ Set Vulnerabilities = {}
+\end_layout
+
+\begin_layout Plain Layout
+
+2.
+ Traverse the dependency tree
+\end_layout
+
+\begin_layout Plain Layout
+
+3.
+ For each node in tree
+\end_layout
+
+\begin_layout Plain Layout
+
+3.1	If node (package@version) is listed as vulnerable
+\end_layout
+
+\begin_layout Plain Layout
+
+3.1.1	 Vulnerabilities = Vulnerabilities U { pathDownTreeTo(node) }
+\end_layout
+
+\begin_layout Plain Layout
+
+4.
+ Set Solutions = {}
+\end_layout
+
+\begin_layout Plain Layout
+
+5.
+ For each vulnerability in Vulnerabilities
+\end_layout
+
+\begin_layout Plain Layout
+
+5.1	Let directDependency = vulnerability[0]
+\end_layout
+
+\begin_layout Plain Layout
+
+5.2	Let solution = latestCompatibleVersion(directDependency)
+\end_layout
+
+\begin_layout Plain Layout
+
+5.3	If solution not vulnerable*
+\end_layout
+
+\begin_layout Plain Layout
+
+5.3.1	 Solutions = Solutions U { solution }
+\end_layout
+
+\end_inset
+
+In practice, steps 1-3 are performed by the third party NSP library.
+ The dependency 
+\begin_inset Quotes eld
+\end_inset
+
+tree
+\begin_inset Quotes erd
+\end_inset
+
+ is not strictly a tree, as several packages may depend on a single other
+ package, and if that package is vulnerable, it will have several different
+ paths leading to it.
+ LatestCompatibleVersion is implemented by querying the NPM package registry
+ for the latest semver-compatible version, and checking if the solution
+ is vulnerable (at step 5.3) entails traversing it's entire dependency tree
+ and checking if any of those dependencies are vulnerable.
+ The formats returned as output or expected as input for the various libraries
+ involved are different, so additional transformations must be performed
+ between steps.
+\end_layout
+
+\begin_layout Standard
+This algorithm is implemented fully in utils/findSolutions.js
+\end_layout
+
+\begin_layout Section
+Implementation Notes
+\end_layout
+
+\begin_layout Subsection
+The App Endpoint
+\end_layout
+
+\begin_layout Subsubsection
+GET /:appId
+\end_layout
+
+\begin_layout Standard
+Returns the list of all report identifiers associated with the application
+ identified by appId, as stored in the database.
+ This list is maintained by the POST method that follows.
+\end_layout
+
+\begin_layout Subsubsection
+POST
+\end_layout
+
+\begin_layout Standard
+When an application is posted to this endpoint, it is analyzed according
+ to the Core Algorithm.
+ The vulnerabilities, solutions and other application metadata is stored
+ in a report that is assigned a unique identifier and stored in the database
+ under that identifier.
+ The list of all reports associated with the posted application is updated
+ to contain this newly generated report and saved to the database.
+ A summary that contains the reportId and brief vulnerability status is
+ returned from this endpoint.
+\end_layout
+
+\begin_layout Subsection
+The Report Endpoint
+\end_layout
+
+\begin_layout Subsubsection
+GET /:reportId
+\end_layout
+
+\begin_layout Standard
+The report identified by reportId is returned from the database.
+\end_layout
+
+\begin_layout Subsection
+The Solution Endpoint
+\end_layout
+
+\begin_layout Subsubsection
+GET /:appId
+\end_layout
+
+\begin_layout Standard
+Gets the list of accepted solutions for the application identified by appId,
+ as stored in the database.
+ This list is maintained by the POST method that follows.
+\end_layout
+
+\begin_layout Subsubsection
+POST /:appId
+\end_layout
+
+\begin_layout Standard
+When a list of proposed solutions is posted to this endpoint, they are marked
+ as accepted by the user.
+ This list of accepted solutions can be retrieved using the GET method that
+ precedes this.
+ A solution is an opaque string as it appears in the solutions field of
+ a report.
+ In practice, the string may not be so opaque and may be human-readable
+ and understandable.
+ Regardless, it must be posted to this endpoint exactly as it appeared in
+ the report.
+\end_layout
+
+\begin_layout Section
+The Database Layer
+\end_layout
+
+\begin_layout Standard
+All services operate atop a simple database layer.
+ It is assumed that this database is a key-value store with methods getAsync(key
+) and putAsync(key, value) where value may be any object.
+ These methods should both return a Promise with the value for key.
+ In the current implementation, this is achieved by wrapping the Level (
+\begin_inset Flex URL
+status open
+
+\begin_layout Plain Layout
+
+https://github.com/Level/levelup
+\end_layout
+
+\end_inset
+
+) module which wraps the LevelDB (
+\begin_inset Flex URL
+status open
+
+\begin_layout Plain Layout
+
+https://github.com/google/leveldb
+\end_layout
+
+\end_inset
+
+) key-value storage engine.
+ This implementation can be easily replaced with a more powerful one (like
+ mongodb, or even a conventional RDBMS) as long as it exposes the same interface.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Part
+Security Oracle NodeJS Buildpack
+\end_layout
+
+\begin_layout Section
+Background and Prerequisites
+\end_layout
+
+\begin_layout Standard
+The Security Oracle NodeJS Buildpack is a fork of the Cloud Foundry NodeJS
+ buildpack (
+\begin_inset Flex URL
+status open
+
+\begin_layout Plain Layout
+
+https://github.com/cloudfoundry/nodejs-buildpack
+\end_layout
+
+\end_inset
+
+).
+ It extends the stock buildpack's functionality by adding additional stages
+ to the compile script.
+\end_layout
+
+\begin_layout Section
+File Structure
+\end_layout
+
+\begin_layout Standard
+The main entry points for the new functionality are two new steps in the
+ bin/compile script; apply_solutions and query_oracle.
+ These functions call functions that are defined in lib/dependencies.sh.
+ These functions also delegate to NodeJS programs located at lib/apply_solutions.
+js and lib/extract_modules.js.
+\end_layout
+
+\begin_layout Section
+Implementation Notes
+\end_layout
+
+\begin_layout Standard
+The functions implemented in bin/compile interact with the Security Oracle
+ via curl, but leave the heavy lifting to scripts implemented in NodeJS.
+ Wrapper functions around these NodeJS scripts are defined in lib/dependencies.sh.
+ Any change in URLs or other transport related details will have to be made
+ directly in the compile script.
+ Changes in the generated data structure will likely be made in the JavaScript
+ programs.
+\end_layout
+
+\begin_layout Subsection
+Apply Solutions
+\end_layout
+
+\begin_layout Standard
+A list of solutions is downloaded from the Security Oracle, according to
+ the application identifier extracted from the buildpack environment.
+ Each solution is comprised of a package name and version.
+ If the package exists in the package.json file, it's version is updated
+ to reflect the one in the solution.
+ This happens before the dependency installation phase, so that by the time
+ the buildpack installs NPM packages, it will install the version specified
+ in the solution.
+\end_layout
+
+\begin_layout Subsection
+Query Oracle
+\end_layout
+
+\begin_layout Standard
+The buildpack runs `npm ls -json` to produce a full, serialized dependency
+ tree.
+ This data is fed into extract_modules.js, which transforms the dependency
+ tree format to conform to the Security Oracle Service API and adds application
+ metadata extracted from the buildpack environment.
+ This transformed and augmented data is sent to the Security Oracle Service
+ for analysis, and the results are displayed to the user.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Part
+Security Dashboard
+\end_layout
+
+\begin_layout Section
+Background and Prerequisites
+\end_layout
+
+\begin_layout Standard
+Security Dashboard is a set of two jobs, two widgets and a dashboard configurati
+on for AtlasBoard (
+\begin_inset Flex URL
+status open
+
+\begin_layout Plain Layout
+
+http://atlasboard.bitbucket.org
+\end_layout
+
+\end_inset
+
+).
+ It's recommended that you get acquainted with the development of Atlasboard
+ components if you are not familiar with them already.
+ 
+\end_layout
+
+\begin_layout Section
+File Structure
+\end_layout
+
+\begin_layout Standard
+The jobs and widgets are under the default package (packages/default).
+ The file structure within the package is the standard structure mandated
+ by AtlasBoard.
+\end_layout
+
+\begin_layout Section
+Implementation Notes
+\end_layout
+
+\begin_layout Subsection
+Vulnerabilities Job / Widget
+\end_layout
+
+\begin_layout Standard
+The vulnerabilities job continually queries the Security Oracle Service
+ for reports related to a configurable application identfier.
+ Any reports that are not already in the cache are downloaded and saved
+ to the cache.
+ The widget then displays a list of deployed application versions, color
+ coded by the vulnerability status.
+ Applications that have at least one vulnerability will be colored red,
+ while applications that have no vulnerabilities will be colored green.
+\end_layout
+
+\begin_layout Subsubsection
+Latest-Report Job / Widget
+\end_layout
+
+\begin_layout Standard
+The latest-report job continually queries the Security Oracle Service for
+ reports related to a configurable application identifier, and downloads
+ the latest report unless it is already in the cache.
+ The widget then displays this report to the user, along with proposed solutions.
+ Solutions that were accepted by the user and submitted to the Security
+ Oracle Service are dispatched directly from the user to the Oracle (via
+ AJAX) without the Security Dashboard's involvement.
+ 
+\end_layout
+
+\end_body
+\end_document
